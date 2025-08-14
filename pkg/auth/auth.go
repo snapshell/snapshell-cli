@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"time"
 )
 
 type AuthConfig struct {
@@ -45,6 +46,7 @@ func SaveConfig(config *AuthConfig) error {
 }
 
 func PerformTokenLogin(apiURL string) error {
+
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return fmt.Errorf("could not start local server: %v", err)
@@ -53,6 +55,7 @@ func PerformTokenLogin(apiURL string) error {
 	callbackURL := fmt.Sprintf("http://127.0.0.1:%d/callback", port)
 
 	tokenURL := fmt.Sprintf("%s/api/token?callback=%s", apiURL, callbackURL)
+	fmt.Printf("Opening browser to: %s\n", tokenURL)
 	fmt.Println("If the browser doesn't open automatically, please visit the URL above.")
 
 	if err := openBrowser(tokenURL); err != nil {
@@ -63,15 +66,6 @@ func PerformTokenLogin(apiURL string) error {
 	server := &http.Server{}
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		token := r.URL.Query().Get("token")
-		if token == "" && r.Method == "POST" {
-			var body struct {
-				Token string `json:"token"`
-			}
-			err := json.NewDecoder(r.Body).Decode(&body)
-			if err == nil {
-				token = body.Token
-			}
-		}
 		if token == "" {
 			http.Error(w, "Missing token", http.StatusBadRequest)
 			return
@@ -82,20 +76,23 @@ func PerformTokenLogin(apiURL string) error {
 	go func() {
 		server.Serve(listener)
 	}()
-	token := <-tokenCh
-	server.Close()
 
-	fmt.Printf("Token received: %s\n", token)
-
-	// Save token to config
-	config := &AuthConfig{
-		Token:  token,
-		APIUrl: apiURL,
+	select {
+	case token := <-tokenCh:
+		server.Close()
+		fmt.Printf("Token received: %s\n", token)
+		config := &AuthConfig{
+			Token:  token,
+			APIUrl: apiURL,
+		}
+		if err := SaveConfig(config); err != nil {
+			return fmt.Errorf("error saving config: %v", err)
+		}
+		fmt.Printf("✅ CLI login successful! Token saved to %s\n", GetConfigPath())
+	case <-time.After(120 * time.Second):
+		server.Close()
+		return fmt.Errorf("login timed out waiting for callback")
 	}
-	if err := SaveConfig(config); err != nil {
-		return fmt.Errorf("error saving config: %v", err)
-	}
-	fmt.Printf("✅ CLI login successful! Token saved to %s\n", GetConfigPath())
 	return nil
 }
 

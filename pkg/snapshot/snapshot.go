@@ -27,6 +27,25 @@ type APIResponse struct {
 }
 
 func DetectSnapshotType(content string) string {
+
+	// Trivy JSON detection (must be first)
+	trimmed := strings.TrimSpace(content)
+	if strings.HasPrefix(trimmed, "{") {
+		var m map[string]interface{}
+		if err := json.Unmarshal([]byte(trimmed), &m); err == nil {
+			keys := []string{"SchemaVersion", "ArtifactType", "Metadata", "Results"}
+			found := true
+			for _, k := range keys {
+				if _, ok := m[k]; !ok {
+					found = false
+					break
+				}
+			}
+			if found {
+				return "trivy"
+			}
+		}
+	}
 	lines := strings.Split(content, "\n")
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
