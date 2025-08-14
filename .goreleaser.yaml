@@ -1,0 +1,37 @@
+project_name: snapshell-cli
+release:
+  github:
+    owner: snapshell
+    name: snapshell-cli
+builds:
+  - id: snapshell
+    main: ./main.go
+    binary: snapshell
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags: -s -w
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+      - snapshell
+    replacements:
+      windows: ''
+    wrap_in_directory: false
+  - format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+      - snapshell.exe
+    only:
+      - windows
+changelog:
+  sort: desc

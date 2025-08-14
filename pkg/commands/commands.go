@@ -90,7 +90,7 @@ var logoutCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&apiURL, "api", "https://snapshell.dev", "API base URL")
+	rootCmd.PersistentFlags().StringVar(&apiURL, "api", "https://app.snapshell.dev", "API base URL")
 	rootCmd.Flags().StringVar(&label, "label", "", "Snapshot label")
 	rootCmd.Flags().StringVar(&typeFlag, "type", "", "Snapshot type (auto-detected if not specified)")
 	rootCmd.Flags().BoolVar(&private, "private", true, "Make snapshot private")

@@ -53,7 +53,6 @@ func PerformTokenLogin(apiURL string) error {
 	callbackURL := fmt.Sprintf("http://127.0.0.1:%d/callback", port)
 
 	tokenURL := fmt.Sprintf("%s/api/token?callback=%s", apiURL, callbackURL)
-	fmt.Printf("Opening browser to: %s\n", tokenURL)
 	fmt.Println("If the browser doesn't open automatically, please visit the URL above.")
 
 	if err := openBrowser(tokenURL); err != nil {
